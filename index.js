@@ -19,6 +19,10 @@ mongoose.connect('mongodb+srv://gucompi:Test123@gucompi-0xprj.gcp.mongodb.net/he
 
     // Seteamos la ruta principal
     router.get('/all', function(req, res) {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
         let heroesModel = require("./heroes.model")
        
         heroesModel.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]}).then((finded)=>{
