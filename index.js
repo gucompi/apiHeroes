@@ -22,7 +22,7 @@ mongoose.connect('mongodb+srv://gucompi:Test123@gucompi-0xprj.gcp.mongodb.net/he
         let heroesModel = require("./heroes.model")
        
         heroesModel.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]}).then((finded)=>{
-            res.send(finded)
+            res.send({res:finded})
         })        
     });
 
