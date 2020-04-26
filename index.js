@@ -36,7 +36,7 @@ mongoose.connect(`mongodb+srv://${process.env.USER}:${process.env.PSW}@${process
                 return res.json({err:"No se encontraron heroes."}).status(404)
                 return res.json(heroesFinded).status(200)
             }).catch((err)=>{
-                return res.json({err:"Error al buscar heroes"}).status(500)
+                return res.json({err:err}).status(500)
             })
     })
 
