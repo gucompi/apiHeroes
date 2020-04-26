@@ -6,77 +6,102 @@ var bodyParser = require('body-parser'); //
 
 var mongoose = require('mongoose'); // Utilizamos la librería de mongoose
 //Creamos la conexión con mongo
-mongoose.connect('mongodb+srv://gucompi:Test123@gucompi-0xprj.gcp.mongodb.net/heroes?authSource=heroes').then(()=>{
+mongoose.connect(`mongodb+srv://${process.env.USER}:${process.env.PSW}@${process.env.SERVER}/${process.env.DB}`).then(()=>{
     // configuramos la app para que use bodyParser(), esto nos dejara usar la informacion de los POST
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-
+    
     var port = process.env.PORT || 8080;        // seteamos el puerto
-
+    
     var router = express.Router();   //Creamos el router de express
-
-
+    
+    let Heroe = require("./heroe.model")
+    let Token = require("./token.model")
+    let cors = require('cors')
+    app.use(cors())
 
     // Seteamos la ruta principal
-    router.get('/all', function(req, res) {
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-        res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
-        let heroesModel = require("./heroes.model")
-       
-        heroesModel.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]}).then((finded)=>{
-            res.send({res:finded})
-        })        
+    router.get('/all/mine', function(req, res) {
+        Heroe.find({"tokenAsociado":req.headers.token}).then((heroesFinded)=>{
+            return res.json(heroesFinded).status(200)
+        }).catch((err)=>{
+            return res.json({err:"Error al buscar tus heroes"}).status(500)
+        })
     });
-
+    router.get('/all',(req,res)=>{
+        Heroe.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]})
+            .then((heroesFinded)=>{
+                if(!heroesFinded)
+                return res.json({err:"No se encontraron heroes."}).status(404)
+                return res.json(heroesFinded).status(200)
+            }).catch((err)=>{
+                return res.json({err:"Error al buscar heroes"}).status(500)
+            })
+    })
 
 // Seteamos la ruta principal
 router.post('/create', function(req, res) {
-    let heroesModel = require("./heroes.model")
-    console.log(req.body)
-   heroesModel.create({
-        name:req.body.name,
-        slug:req.body.slug,
-        "powerstats/intelligence":req.body.powerstatsintelligence,
+    if(!req.headers.token || req.headers.token=="" || !mongoose.isValidObjectId(req.headers.token))
+        return res.json({err:"Token invalido, inexistente o vacio"}).status(403)
+    if(!req.body.name|| req.body.name=="") 
+        return res.json({err:"No se puede crear un heroe sin nombre"}).status(402)
 
-        "powerstats/strength":req.body.powerstatsstrength,
-        "powerstats/speed": req.body.pwerstatspeed,
-        "powerstats/durability": req.body.powerstatsdurability,
-        "powerstats/power": req.body.powerstatspower,
-        "powerstats/combat": req.body.powerstatscombat,
-        "appearance/gender": req.body.appearancegender,
-        "appearance/race": req.body.appearancerace,
-        "appearance/height/0":req.body.appearanceheight0,
-        "appearance/height/1": req.body.appearanceheight1,
-        "appearance/weight/0": req.body.appearanceweight0,
-        "appearance/weight/1":req.body.appearanceweight1,
-        "appearance/eyeColor": req.body.appearanceeyecolor,
-        "appearance/hairColor": req.body.appearancehaircolor,
-        "biography/fullName":req.body.biographyfullname,
-        "biography/alterEgos": req.body.biographyalterEgos,
-        "biography/aliases/0": req.body.biographyaliases0,
-        "biography/placeOfBirth":req.body.biographyplaceofbirth,
-        "biography/firstAppearance": req.body.biographyfullname,
-
-
-        tokenAsociado:req.headers.token
-    }).then((heroeCreated)=>{
-       res.json(heroeCreated)
-   }).catch((err)=>{
-       res.json(err)
-   })
+    Heroe.count({tokenAsociado:req.headers.token}).then((cant)=>{
+        if(cant>100) return res.json({err:"Tu token ya tiene 100 heroes Asociados."}).status(201)
+    }).then(()=>{
+        
+        Heroe.findOne({name:req.body.name}).then((heroeFinded)=>{
+            if(heroeFinded) res.json({err:"Ya existe un heroe con ese nombre"}).status(402)
+            Heroe.create({
+                name:req.body.name,
+                slug:req.body.slug,
+                "powerstats/intelligence":req.body.powerstatsintelligence,
+                "powerstats/strength":req.body.powerstatsstrength,
+                "powerstats/speed": req.body.pwerstatspeed,
+                "powerstats/durability": req.body.powerstatsdurability,
+                "powerstats/power": req.body.powerstatspower,
+                "powerstats/combat": req.body.powerstatscombat,
+                "appearance/gender": req.body.appearancegender,
+                "appearance/race": req.body.appearancerace,
+                "appearance/height/0":req.body.appearanceheight0,
+                "appearance/height/1": req.body.appearanceheight1,
+                "appearance/weight/0": req.body.appearanceweight0,
+                "appearance/weight/1":req.body.appearanceweight1,
+                "appearance/eyeColor": req.body.appearanceeyecolor,
+                "appearance/hairColor": req.body.appearancehaircolor,
+                "biography/fullName":req.body.biographyfullname,
+                "biography/alterEgos": req.body.biographyalterEgos,
+                "biography/aliases/0": req.body.biographyaliases0,
+                "biography/placeOfBirth":req.body.biographyplaceofbirth,
+                "biography/firstAppearance": req.body.biographyfullname,
+                tokenAsociado:req.headers.token
+            }).then((heroeCreated)=>{
+                return res.json(heroeCreated).status(200)
+            }).catch((err)=>{
+                return res.json({err:"Error al crear heroe"}).status((500))
+            })
+        }).catch((err)=>{
+            return res.json({err:"Error al procesar tu solicitud."}).status(500)
+        })
+    }).catch((err)=>{
+        return res.json({err:"Error al procesar tu solicitud."}).status(500)
+    })
 });
 
 // Seteamos la ruta principal
 router.post('/token', function(req, res) {
-    let tokenModel = require("./token.model")
-    
-   tokenModel.create({email:req.body.email}).then((token)=>{
-       res.json(token).status(200)
-   }).catch((err)=>{
-       res.json(err).status(500)
-   })
+    if(!req.body.email || req.body.email=="")
+        return res.json({err:"Para solicitar tu token, debes enviar tu email"}).status(401)    
+    Token.findOne({email:req.body.email}).then((tokenFinded)=>{
+        if(tokenFinded) res.json({token:tokenFinded._id}).status(200)
+        Token.create({email:req.body.email}).then((tokenCreated)=>{
+            return res.json({token:tokenCreated._id}).status(200)
+        }).catch((err)=>{
+            return res.json({err:"Error al crear Token"}).status(500)
+        })
+    }).catch((err)=>{
+        return res.json({err:"Error al buscar Token para tu email"}).status(500)
+    })
 });
 
 
