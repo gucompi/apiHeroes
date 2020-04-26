@@ -14,10 +14,18 @@ Esta es una api hecha en Express - Node - Mongoose para servidor heroes y servir
   - Agregué /all/mine para listar heroes creados por el user y /all/pagination para listar de forma paginada.
 
 ### Insalacion
-
+Crear archivo .env y colocarle valores a los parametros:
 ```sh
-$ git clone 
-$ cd 
+PORT=8080
+USER=
+PSW=
+DB=
+SERVER=
+
+```
+```sh
+$ git clone https://github.com/gucompi/apiHeroes.git
+$ cd apiHeroes
 $ npm install
 $ npm start
 ```
