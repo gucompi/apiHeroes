@@ -28,7 +28,7 @@ mongoose.connect(`mongodb+srv://${process.env.USER}:${process.env.PSW}@${process
             return res.json({err:"Error al buscar tus heroes"}).status(500)
         })
     });
-    router.get('/all/:skip?/:limit?',(req,res)=>{
+    router.get('/all/pagination/:skip?/:limit?',(req,res)=>{
         Heroe.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]})
         .skip(req.params.skip)
         .limit(req.params.limit).then((heroesFinded)=>{
