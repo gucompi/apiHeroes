@@ -30,8 +30,8 @@ mongoose.connect(`mongodb+srv://${process.env.USER}:${process.env.PSW}@${process
     });
     router.get('/all/pagination/:skip?/:limit?',(req,res)=>{
         Heroe.find({$or:[{"tokenAsociado":null},{"tokenAsociado":req.headers.token}]})
-        .skip(req.params.skip)
-        .limit(req.params.limit).then((heroesFinded)=>{
+        .skip(parseInt(req.params.skip))
+        .limit(parseInt(req.params.limit)).then((heroesFinded)=>{
                 if(!heroesFinded)
                 return res.json({err:"No se encontraron heroes."}).status(404)
                 return res.json(heroesFinded).status(200)
